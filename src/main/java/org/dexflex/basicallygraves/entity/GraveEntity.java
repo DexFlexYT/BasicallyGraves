@@ -25,12 +25,21 @@ public class GraveEntity extends MobEntity {
     public GraveEntity(EntityType<? extends MobEntity> type, World world) {
         super(type, world);
         this.setHealth(1.0F);
+
     }
 
     public void setOwner(ServerPlayerEntity player) {
         this.ownerName = player.getGameProfile().getName();
         this.ownerSkin = player.getGameProfile().getId().toString();
     }
+
+    @Override
+    public boolean isPersistent() {
+        // Return true to prevent despawning
+        return true;
+    }
+
+
 
     public void fillInventoryFromPlayer(ServerPlayerEntity player) {
         int slot = 0;
@@ -93,6 +102,7 @@ public class GraveEntity extends MobEntity {
         nbt.put("GraveInventory", invList);
         nbt.putString("OwnerName", ownerName);
         nbt.putString("OwnerSkin", ownerSkin);
+        nbt.putBoolean("PersistenceRequired", true);
     }
 
     @Override
@@ -104,6 +114,9 @@ public class GraveEntity extends MobEntity {
         }
         ownerName = nbt.getString("OwnerName");
         ownerSkin = nbt.getString("OwnerSkin");
+        if (nbt.contains("PersistenceRequired")) {
+            this.setPersistent();
+        }
     }
 
     @Override

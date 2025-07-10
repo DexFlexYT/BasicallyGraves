@@ -12,7 +12,7 @@ public class DeathEventHandler {
         });
 
         ServerPlayerEvents.ALLOW_DEATH.register((player, damageSource, damageAmount) -> {
-            if (!player.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)) {
+            if (!player.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)&& !player.getInventory().isEmpty()) {
                 GraveEntity grave = new GraveEntity(ModEntities.GRAVE_ENTITY, player.world);
                 grave.setPosition(player.getX(), player.getY(), player.getZ());
 
