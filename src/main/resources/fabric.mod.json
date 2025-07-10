@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "basicallygraves",
+	"version": "${version}",
+	"name": "BasicallyGraves",
+	"description": "Adds entity based graves!",
+	"authors": [
+		"DexFlex_YT"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/basicallygraves/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"org.dexflex.basicallygraves.BasicallyGraves"
+		],
+		"client": [
+			"org.dexflex.basicallygraves.BasicallyGravesClient"
+		],
+		"fabric-datagen": [
+			"org.dexflex.basicallygraves.BasicallyGravesDataGenerator"
+		]
+	},
+	"mixins": [
+		"basicallygraves.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.19",
+		"java": ">=17",
+		"fabric": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
