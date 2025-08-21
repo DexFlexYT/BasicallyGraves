@@ -12,7 +12,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Arm;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 
 import java.util.Collections;
@@ -21,6 +23,8 @@ public class GraveEntity extends MobEntity {
     private final SimpleInventory graveInventory = new SimpleInventory(54);
     private String ownerName = "";
     private String ownerSkin = "";
+    private int spawnInvulTicks = 10;
+
 
     public GraveEntity(EntityType<? extends MobEntity> type, World world) {
         super(type, world);
@@ -78,6 +82,9 @@ public class GraveEntity extends MobEntity {
 
     @Override
     public boolean damage(DamageSource source, float amount) {
+        if (spawnInvulTicks > 0) {
+            return false;
+        }
         if (source.getAttacker() instanceof PlayerEntity) {
             return super.damage(source, amount);
         }
@@ -87,6 +94,7 @@ public class GraveEntity extends MobEntity {
 
     @Override
     public boolean isInvulnerableTo(DamageSource damageSource) {
+        if (spawnInvulTicks > 0) return true;
         return !(damageSource.getAttacker() instanceof PlayerEntity);
     }
 
@@ -153,4 +161,29 @@ public class GraveEntity extends MobEntity {
             }
         }
     }
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!this.world.isClient && this.world instanceof ServerWorld serverWorld) {
+            ChunkPos pos = this.getChunkPos();
+            serverWorld.setChunkForced(pos.x, pos.z, true);
+        }
+
+        if (spawnInvulTicks > 0) {
+            spawnInvulTicks--;
+        }
+    }
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!this.world.isClient && this.world instanceof ServerWorld serverWorld) {
+            ChunkPos pos = this.getChunkPos();
+            serverWorld.setChunkForced(pos.x, pos.z, false);
+        }
+        super.remove(reason);
+    }
+
+
+
+
 }
