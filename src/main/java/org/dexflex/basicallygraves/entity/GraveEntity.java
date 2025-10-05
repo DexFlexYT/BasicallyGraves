@@ -11,6 +11,7 @@ import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Arm;
@@ -25,11 +26,9 @@ public class GraveEntity extends MobEntity {
     private String ownerSkin = "";
     private int spawnInvulTicks = 10;
 
-
     public GraveEntity(EntityType<? extends MobEntity> type, World world) {
         super(type, world);
         this.setHealth(1.0F);
-
     }
 
     public void setOwner(ServerPlayerEntity player) {
@@ -39,11 +38,8 @@ public class GraveEntity extends MobEntity {
 
     @Override
     public boolean isPersistent() {
-        // Return true to prevent despawning
         return true;
     }
-
-
 
     public void fillInventoryFromPlayer(ServerPlayerEntity player) {
         int slot = 0;
@@ -62,16 +58,14 @@ public class GraveEntity extends MobEntity {
     }
 
     private void dropItemWithLowVelocity(ItemStack stack) {
-        ItemEntity itemEntity = new ItemEntity(this.world, this.getX(), this.getY() + 0.25, this.getZ(), stack);
-
+        ItemEntity itemEntity = new ItemEntity(this.getWorld(), this.getX(), this.getY() + 0.25, this.getZ(), stack);
         double velocityRange = 0.1;
         itemEntity.setVelocity(
                 (this.random.nextDouble() - 0.5) * velocityRange,
                 0.1,
                 (this.random.nextDouble() - 0.5) * velocityRange
         );
-
-        this.world.spawnEntity(itemEntity);
+        this.getWorld().spawnEntity(itemEntity);
     }
 
     @Override
@@ -79,18 +73,12 @@ public class GraveEntity extends MobEntity {
         return Arm.RIGHT;
     }
 
-
     @Override
     public boolean damage(DamageSource source, float amount) {
-        if (spawnInvulTicks > 0) {
-            return false;
-        }
-        if (source.getAttacker() instanceof PlayerEntity) {
-            return super.damage(source, amount);
-        }
+        if (spawnInvulTicks > 0) return false;
+        if (source.getAttacker() instanceof PlayerEntity) return super.damage(source, amount);
         return false;
     }
-
 
     @Override
     public boolean isInvulnerableTo(DamageSource damageSource) {
@@ -101,11 +89,18 @@ public class GraveEntity extends MobEntity {
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getRegistryManager();
+
         NbtList invList = new NbtList();
         for (int i = 0; i < graveInventory.size(); i++) {
-            NbtCompound stackNbt = new NbtCompound();
-            graveInventory.getStack(i).writeNbt(stackNbt);
-            invList.add(stackNbt);
+            ItemStack stack = graveInventory.getStack(i);
+            if (!stack.isEmpty()) {
+                NbtCompound slotNbt = new NbtCompound();
+                slotNbt.putByte("Slot", (byte) i);
+                slotNbt.put("Item", stack.encode(registryLookup));
+                invList.add(slotNbt);
+            }
         }
         nbt.put("GraveInventory", invList);
         nbt.putString("OwnerName", ownerName);
@@ -116,12 +111,22 @@ public class GraveEntity extends MobEntity {
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
+
+        RegistryWrapper.WrapperLookup registryLookup = this.getRegistryManager();
+
         NbtList invList = nbt.getList("GraveInventory", 10);
         for (int i = 0; i < invList.size(); i++) {
-            graveInventory.setStack(i, ItemStack.fromNbt(invList.getCompound(i)));
+            NbtCompound slotNbt = invList.getCompound(i);
+            int slot = slotNbt.getByte("Slot") & 255;
+            ItemStack stack = ItemStack.fromNbt(registryLookup, slotNbt.getCompound("Item")).orElse(ItemStack.EMPTY);
+            if (slot >= 0 && slot < graveInventory.size()) {
+                graveInventory.setStack(slot, stack);
+            }
         }
+
         ownerName = nbt.getString("OwnerName");
         ownerSkin = nbt.getString("OwnerSkin");
+
         if (nbt.contains("PersistenceRequired")) {
             this.setPersistent();
         }
@@ -132,7 +137,6 @@ public class GraveEntity extends MobEntity {
         return Collections.emptyList();
     }
 
-
     @Override
     public ItemStack getEquippedStack(net.minecraft.entity.EquipmentSlot slot) {
         return ItemStack.EMPTY;
@@ -142,16 +146,10 @@ public class GraveEntity extends MobEntity {
     public void equipStack(net.minecraft.entity.EquipmentSlot slot, ItemStack stack) {}
 
     @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
-    }
-
-
-    @Override
     public void onDeath(DamageSource source) {
         super.onDeath(source);
 
-        if (!this.world.isClient) {
+        if (!this.getWorld().isClient) {
             for (int i = 0; i < graveInventory.size(); i++) {
                 ItemStack stack = graveInventory.getStack(i);
                 if (!stack.isEmpty()) {
@@ -161,29 +159,25 @@ public class GraveEntity extends MobEntity {
             }
         }
     }
+
     @Override
     public void tick() {
         super.tick();
 
-        if (!this.world.isClient && this.world instanceof ServerWorld serverWorld) {
+        if (!this.getWorld().isClient && this.getWorld() instanceof ServerWorld serverWorld) {
             ChunkPos pos = this.getChunkPos();
             serverWorld.setChunkForced(pos.x, pos.z, true);
         }
 
-        if (spawnInvulTicks > 0) {
-            spawnInvulTicks--;
-        }
+        if (spawnInvulTicks > 0) spawnInvulTicks--;
     }
+
     @Override
     public void remove(RemovalReason reason) {
-        if (!this.world.isClient && this.world instanceof ServerWorld serverWorld) {
+        if (!this.getWorld().isClient && this.getWorld() instanceof ServerWorld serverWorld) {
             ChunkPos pos = this.getChunkPos();
             serverWorld.setChunkForced(pos.x, pos.z, false);
         }
         super.remove(reason);
     }
-
-
-
-
 }

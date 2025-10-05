@@ -1,10 +1,13 @@
 package org.dexflex.basicallygraves;
 
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import org.dexflex.basicallygraves.entity.GraveEntity;
 
 public class ModEntities {
@@ -12,12 +15,13 @@ public class ModEntities {
 
     public static void register() {
         GRAVE_ENTITY = Registry.register(
-                Registry.ENTITY_TYPE,
-                new Identifier("basicallygraves", "grave"),
-                EntityType.Builder.create(GraveEntity::new, SpawnGroup.MISC)
-                        .setDimensions(0.6F, 0.9F)
-                        .build("grave")
+                Registries.ENTITY_TYPE,
+                Identifier.of("basicallygraves", "grave"),
+                FabricEntityTypeBuilder.create(SpawnGroup.MISC, GraveEntity::new)
+                        .dimensions(EntityDimensions.fixed(0.6F, 0.9F))
+                        .build()
         );
+
         FabricDefaultAttributeRegistry.register(GRAVE_ENTITY, GraveEntity.createGraveAttributes());
     }
 }
