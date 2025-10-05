@@ -5,6 +5,6 @@ import net.minecraft.util.Identifier;
 
 public class ModModelLayers {
     public static final EntityModelLayer GRAVE = new EntityModelLayer(
-        new Identifier("basicallygraves", "grave"), "main"
+             Identifier.of("basicallygraves", "grave"), "main"
     );
 }
