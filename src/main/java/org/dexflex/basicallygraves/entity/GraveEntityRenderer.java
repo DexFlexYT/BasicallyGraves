@@ -13,6 +13,6 @@ public class GraveEntityRenderer extends MobEntityRenderer<GraveEntity, GraveEnt
 
     @Override
     public Identifier getTexture(GraveEntity entity) {
-        return new Identifier("textures/entity/grave.png");
+        return new Identifier("basicallygraves", "textures/entity/grave.png");
     }
 }

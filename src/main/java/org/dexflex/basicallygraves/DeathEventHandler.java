@@ -1,6 +1,5 @@
 package org.dexflex.basicallygraves;
 
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -13,8 +12,8 @@ public class DeathEventHandler {
         });
 
         ServerPlayerEvents.ALLOW_DEATH.register((player, damageSource, damageAmount) -> {
-            if (!player.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)&& !player.getInventory().isEmpty()) {
-                GraveEntity grave = new GraveEntity(ModEntities.GRAVE_ENTITY, player.world);
+            if (!player.getWorld().getGameRules().getBoolean(GameRules.KEEP_INVENTORY) && !player.getInventory().isEmpty()) {
+                GraveEntity grave = new GraveEntity(ModEntities.GRAVE_ENTITY, player.getWorld());
                 grave.setPosition(player.getX(), player.getY(), player.getZ());
 
                 grave.setCustomName(
@@ -23,7 +22,7 @@ public class DeathEventHandler {
                 grave.setCustomNameVisible(true);
 
                 grave.fillInventoryFromPlayer(player);
-                player.world.spawnEntity(grave);
+                player.getWorld().spawnEntity(grave);
 
                 player.getInventory().clear();
             }
